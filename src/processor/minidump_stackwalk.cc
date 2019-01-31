@@ -34,7 +34,11 @@
 
 #include <stdio.h>
 #include <string.h>
+#ifndef WIN32
 #include <unistd.h>
+#else
+#include "getopt.h"
+#endif
 
 #include <limits>
 #include <string>
