@@ -30,7 +30,16 @@ if(WIN32)
                     -D_UNICODE)
 
     set(DEBUG_ACCESS_SDK_DIR "$ENV{VSINSTALLDIR}/DIA SDK")
-    if (NOT (EXISTS "${DEBUG_ACCESS_SDK_DIR}"))
+    if (NOT EXISTS "${DEBUG_ACCESS_SDK_DIR}")
+        set(DEBUG_ACCESS_SDK_DIR "$ENV{VS150COMNTOOLS}/../../DIA SDK")
+    endif()
+    if (NOT EXISTS "${DEBUG_ACCESS_SDK_DIR}")
+        set(DEBUG_ACCESS_SDK_DIR "$ENV{VS140COMNTOOLS}/../../DIA SDK")
+    endif()
+    if (NOT EXISTS "${DEBUG_ACCESS_SDK_DIR}")
+        set(DEBUG_ACCESS_SDK_DIR "$ENV{VS120COMNTOOLS}/../../DIA SDK")
+    endif()
+    if (NOT EXISTS "${DEBUG_ACCESS_SDK_DIR}")
         # The Debug Access SDK is required to build the dump_syms tool.
         # It ships with the pro versions of Visual Studio 2008 and 2010 but not
         # the express versions. It is available separately as part of the Windows SDK
