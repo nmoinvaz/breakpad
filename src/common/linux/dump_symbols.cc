@@ -971,12 +971,10 @@ bool ReadSymbolDataElfClass(const typename ElfClass::Ehdr* elf_header,
     return false;
 
   LoadSymbolsInfo<ElfClass> info(debug_dirs);
-  if (!LoadSymbols<ElfClass>(obj_filename, big_endian, elf_header,
+  if (LoadSymbols<ElfClass>(obj_filename, big_endian, elf_header,
                              !debug_dirs.empty(), &info,
-                             options, module.get())) {
+                             options, module.get()) && !info.debuglink_file().empty()) {
     const string debuglink_file = info.debuglink_file();
-    if (debuglink_file.empty())
-      return false;
 
     // Load debuglink ELF file.
     fprintf(stderr, "Found debugging info in %s\n", debuglink_file.c_str());
