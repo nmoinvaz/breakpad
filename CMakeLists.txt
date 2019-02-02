@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
 
-project(breakpad CXX)
-
 option(BKPAD_DUMP_SYMS "Builds tool for producing cross-platform .sym files" ON)
 # dump_syms - Tool for producing cross-platform .sym files from a binary with debug info
 
@@ -158,7 +156,7 @@ else()
         find_library(FOUNDATION_LIB Foundation REQUIRED)
         set(BREAKPADCOMMON_LIBS ${FOUNDATION_LIB})
         find_library(APPLICATIONSERVICES_LIB ApplicationServices REQUIRED)
-        set(BREAKPADCOMMON_LIBS ${APPLICATIONSERVICES_LIB})
+        list(APPEND BREAKPADCOMMON_LIBS ${APPLICATIONSERVICES_LIB})
 
         if(APPLE AND CMAKE_GENERATOR MATCHES "Xcode")
             # Xcode 10 or higher uses libc++
@@ -271,6 +269,8 @@ macro(breakpad_set_project_properties project)
             _CRT_SECURE_NO_WARNINGS)
     endif()
 endmacro()
+
+project(breakpad CXX)
 
 add_library(breakpad_common STATIC 
     ${BREAKPADCOMMON_LIB_SRCS} ${BREAKPADCOMMON_LIB_HEADERS})
