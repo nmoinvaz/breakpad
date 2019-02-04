@@ -28,8 +28,6 @@ if(WIN32)
                     -D_UNICODE)
 
     list(APPEND BREAKPADCOMMON_LIB_SRCS
-        ${BREAKPAD_SRC_DIR}/common/windows/dia_util.cc
-        ${BREAKPAD_SRC_DIR}/common/windows/omap.cc
         ${BREAKPAD_SRC_DIR}/common/windows/path_helper.cc
         ${BREAKPAD_SRC_DIR}/common/windows/guid_string.cc
         ${BREAKPAD_SRC_DIR}/common/windows/string_utils.cc)
@@ -220,9 +218,8 @@ if(BKPAD_DUMP_SYMS)
         include_directories(${DEBUG_ACCESS_SDK_DIR}/include)
 
         set(DUMPSYMS_SRCS
-            # pdb_source_line_writer.cc is linked into the `dump_syms` target rather than
-            # `breakpad_common` to avoid a runtime dependency on the DIA SDK libs
-            # in the breakpad client library
+            ${BREAKPAD_SRC_DIR}/common/windows/dia_util.cc
+            ${BREAKPAD_SRC_DIR}/common/windows/omap.cc
             ${BREAKPAD_SRC_DIR}/common/windows/pdb_source_line_writer.cc
             ${BREAKPAD_SRC_DIR}/tools/windows/dump_syms/dump_syms.cc)
         set(DUMPSYMS_HEADERS
@@ -264,7 +261,7 @@ if(BKPAD_DUMP_SYMS)
             ${BREAKPAD_SRC_DIR}/common/stabs_reader.h
             ${BREAKPAD_SRC_DIR}/common/stabs_to_module.h)
 
-        if(APPLE)          
+        if(APPLE)
             list(APPEND DUMPSYMS_SRCS
                 ${BREAKPAD_SRC_DIR}/common/mac/arch_utilities.cc
                 ${BREAKPAD_SRC_DIR}/common/mac/dump_syms.cc
