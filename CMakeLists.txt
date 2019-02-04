@@ -6,11 +6,11 @@ option(BKPAD_DUMP_SYMS "Builds tool for producing cross-platform .sym files" ON)
 option(BKPAD_MINIDUMP "Builds tool for producing stacktrace" ON)
 # minidump_stackwalk - A tool for producing a stacktrace # from a minidump using debug symbol
 # files produced by dump_syms
-#
-# This tool does not build on Windows. A version pre-built with Cygwin is available from
-# http://stackoverflow.com/questions/11302258/build-google-breakpad-stackwalk
 
 set(BREAKPAD_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+include_directories(${BREAKPAD_SRC_DIR} 
+    ${BREAKPAD_SRC_DIR}/common)
 
 set(BREAKPADCOMMON_LIB_SRCS
     ${BREAKPAD_SRC_DIR}/common/convert_UTF.c
@@ -26,29 +26,6 @@ if(WIN32)
     add_definitions(-D_SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS
                     -DUNICODE
                     -D_UNICODE)
-
-    set(DEBUG_ACCESS_SDK_DIR "$ENV{VSINSTALLDIR}/DIA SDK")
-    if (NOT EXISTS "${DEBUG_ACCESS_SDK_DIR}")
-        set(DEBUG_ACCESS_SDK_DIR "$ENV{VS150COMNTOOLS}/../../DIA SDK")
-    endif()
-    if (NOT EXISTS "${DEBUG_ACCESS_SDK_DIR}")
-        set(DEBUG_ACCESS_SDK_DIR "$ENV{VS140COMNTOOLS}/../../DIA SDK")
-    endif()
-    if (NOT EXISTS "${DEBUG_ACCESS_SDK_DIR}")
-        set(DEBUG_ACCESS_SDK_DIR "$ENV{VS120COMNTOOLS}/../../DIA SDK")
-    endif()
-    if (NOT EXISTS "${DEBUG_ACCESS_SDK_DIR}")
-        # The Debug Access SDK is required to build the dump_syms tool.
-        # It ships with the pro versions of Visual Studio 2008 and 2010 but not
-        # the express versions. It is available separately as part of the Windows SDK
-        # however. Please check that VSINSTALLDIR environment variable is set.
-        message(FATAL_ERROR "Debug Access SDK not found in ${DEBUG_ACCESS_SDK_DIR}.")
-    endif()
-
-    include_directories(${BREAKPAD_SRC_DIR}
-        ${BREAKPAD_SRC_DIR}/common
-        ${BREAKPAD_SRC_DIR}/third_party/windows/include 
-        ${DEBUG_ACCESS_SDK_DIR}/include)
 
     list(APPEND BREAKPADCOMMON_LIB_SRCS
         ${BREAKPAD_SRC_DIR}/common/windows/dia_util.cc
@@ -76,24 +53,6 @@ if(WIN32)
         ${CLIENT_SRC_DIR}/crash_generation/crash_generation_client.h
         ${CLIENT_SRC_DIR}/crash_generation/crash_generation_server.h
         ${CLIENT_SRC_DIR}/crash_generation/minidump_generator.h)
-
-    list(APPEND DUMPSYMS_SRCS
-        # pdb_source_line_writer.cc is linked into the `dump_syms` target rather than
-        # `breakpad_common` to avoid a runtime dependency on the DIA SDK libs
-        # in the breakpad client library
-        ${BREAKPAD_SRC_DIR}/common/windows/pdb_source_line_writer.cc
-        ${BREAKPAD_SRC_DIR}/tools/windows/dump_syms/dump_syms.cc)
-    list(APPEND DUMPSYMS_HEADERS
-        ${BREAKPAD_SRC_DIR}/common/windows/pdb_source_line_writer.h)
-
-    find_library(DIA_SDK_GUID_LIB diaguids PATHS ${DEBUG_ACCESS_SDK_DIR}/lib)
-    if("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
-        find_library(DIA_SDK_GUID_LIB diaguids PATHS ${DEBUG_ACCESS_SDK_DIR}/lib/amd64)
-    else("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
-        find_library(DIA_SDK_GUID_LIB diaguids PATHS ${DEBUG_ACCESS_SDK_DIR}/lib)
-    endif("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
-
-    set(DUMPSYMS_LIBS ${DIA_SDK_GUID_LIB})
 else()
     list(APPEND BREAKPADCOMMON_LIB_SRCS
         ${BREAKPAD_SRC_DIR}/common/path_helper.cc)
@@ -103,38 +62,8 @@ else()
     set(BREAKPAD_LIB_HEADERS
         ${BREAKPAD_SRC_DIR}/client/minidump_file_writer.h)
 
-    set(DUMPSYMS_SRCS
-        ${BREAKPAD_SRC_DIR}/common/dwarf/bytereader.cc
-        ${BREAKPAD_SRC_DIR}/common/dwarf/dwarf2diehandler.cc
-        ${BREAKPAD_SRC_DIR}/common/dwarf/dwarf2reader.cc
-        ${BREAKPAD_SRC_DIR}/common/dwarf/elf_reader.cc
-        ${BREAKPAD_SRC_DIR}/common/dwarf_cfi_to_module.cc
-        ${BREAKPAD_SRC_DIR}/common/dwarf_cu_to_module.cc
-        ${BREAKPAD_SRC_DIR}/common/dwarf_line_to_module.cc
-        ${BREAKPAD_SRC_DIR}/common/dwarf_range_list_handler.cc
-        ${BREAKPAD_SRC_DIR}/common/language.cc
-        ${BREAKPAD_SRC_DIR}/common/module.cc
-        ${BREAKPAD_SRC_DIR}/common/stabs_reader.cc
-        ${BREAKPAD_SRC_DIR}/common/stabs_to_module.cc)
-    set(DUMPSYMS_HEADERS
-        ${BREAKPAD_SRC_DIR}/common/dwarf/bytereader.h
-        ${BREAKPAD_SRC_DIR}/common/dwarf/dwarf2diehandler.h
-        ${BREAKPAD_SRC_DIR}/common/dwarf/dwarf2reader.h
-        ${BREAKPAD_SRC_DIR}/common/dwarf/elf_reader.h
-        ${BREAKPAD_SRC_DIR}/common/dwarf_cfi_to_module.h
-        ${BREAKPAD_SRC_DIR}/common/dwarf_cu_to_module.h
-        ${BREAKPAD_SRC_DIR}/common/dwarf_line_to_module.h
-        ${BREAKPAD_SRC_DIR}/common/dwarf_range_list_handler.h
-        ${BREAKPAD_SRC_DIR}/common/language.h
-        ${BREAKPAD_SRC_DIR}/common/module.h
-        ${BREAKPAD_SRC_DIR}/common/stabs_reader.h
-        ${BREAKPAD_SRC_DIR}/common/stabs_to_module.h)
-
     if(APPLE)
         add_definitions(-DHAVE_MACH_O_NLIST_H)
-        
-        include_directories(${BREAKPAD_SRC_DIR} 
-            ${BREAKPAD_SRC_DIR}/third_party/mac/include)
 
         list(APPEND BREAKPADCOMMON_LIB_SRCS
             ${BREAKPAD_SRC_DIR}/common/mac/MachIPC.mm
@@ -153,10 +82,10 @@ else()
             ${BREAKPAD_SRC_DIR}/common/mac/macho_walker.h
             ${BREAKPAD_SRC_DIR}/common/mac/string_utilities.h)
 
-        find_library(FOUNDATION_LIB Foundation REQUIRED)
-        set(BREAKPADCOMMON_LIBS ${FOUNDATION_LIB})
-        find_library(APPLICATIONSERVICES_LIB ApplicationServices REQUIRED)
-        list(APPEND BREAKPADCOMMON_LIBS ${APPLICATIONSERVICES_LIB})
+        find_library(FOUNDATION_LIBRARY Foundation REQUIRED)
+        set(BREAKPADCOMMON_LIBS ${FOUNDATION_LIBRARY})
+        find_library(APPLICATIONSERVICES_LIBRARY ApplicationServices REQUIRED)
+        list(APPEND BREAKPADCOMMON_LIBS ${APPLICATIONSERVICES_LIBRARY})
 
         if(APPLE AND CMAKE_GENERATOR MATCHES "Xcode")
             # Xcode 10 or higher uses libc++
@@ -179,20 +108,8 @@ else()
             ${CLIENT_SRC_DIR}/handler/dynamic_images.h
             ${CLIENT_SRC_DIR}/handler/exception_handler.h
             ${CLIENT_SRC_DIR}/handler/minidump_generator.h)
-
-        list(APPEND DUMPSYMS_SRCS
-            ${BREAKPAD_SRC_DIR}/common/mac/arch_utilities.cc
-            ${BREAKPAD_SRC_DIR}/common/mac/dump_syms.cc
-            ${BREAKPAD_SRC_DIR}/common/mac/macho_reader.cc
-            ${BREAKPAD_SRC_DIR}/tools/mac/dump_syms/dump_syms_tool.cc)
-        list(APPEND DUMPSYMS_HEADERS
-            ${BREAKPAD_SRC_DIR}/common/mac/dump_syms.h
-            ${BREAKPAD_SRC_DIR}/common/mac/macho_reader.h)
     elseif(UNIX)
         add_definitions(-DHAVE_A_OUT_H)
-
-        include_directories(${BREAKPAD_SRC_DIR} 
-            ${BREAKPAD_SRC_DIR}/third_party/linux/include)
 
         list(APPEND BREAKPADCOMMON_LIB_SRCS
             ${BREAKPAD_SRC_DIR}/common/linux/crc32.cc
@@ -240,14 +157,6 @@ else()
             ${CLIENT_SRC_DIR}/minidump_writer/linux_dumper.h
             ${CLIENT_SRC_DIR}/minidump_writer/linux_ptrace_dumper.h
             ${CLIENT_SRC_DIR}/minidump_writer/minidump_writer.h)
-
-        list(APPEND DUMPSYMS_SRCS
-            ${BREAKPAD_SRC_DIR}/common/linux/dump_symbols.cc
-            ${BREAKPAD_SRC_DIR}/common/linux/elf_symbols_to_module.cc
-            ${BREAKPAD_SRC_DIR}/tools/linux/dump_syms/dump_syms.cc)
-        list(APPEND DUMPSYMS_HEADERS
-            ${BREAKPAD_SRC_DIR}/common/linux/dump_symbols.h
-            ${BREAKPAD_SRC_DIR}/common/linux/elf_symbols_to_module.h)
     endif()
 endif()
 
@@ -289,6 +198,92 @@ endif()
 target_link_libraries(breakpad breakpad_common)
 
 if(BKPAD_DUMP_SYMS)
+    if(WIN32)
+        set(DEBUG_ACCESS_SDK_DIR "$ENV{VSINSTALLDIR}/DIA SDK")
+        if (NOT EXISTS "${DEBUG_ACCESS_SDK_DIR}")
+            set(DEBUG_ACCESS_SDK_DIR "$ENV{VS150COMNTOOLS}/../../DIA SDK")
+        endif()
+        if (NOT EXISTS "${DEBUG_ACCESS_SDK_DIR}")
+            set(DEBUG_ACCESS_SDK_DIR "$ENV{VS140COMNTOOLS}/../../DIA SDK")
+        endif()
+        if (NOT EXISTS "${DEBUG_ACCESS_SDK_DIR}")
+            set(DEBUG_ACCESS_SDK_DIR "$ENV{VS120COMNTOOLS}/../../DIA SDK")
+        endif()
+        if (NOT EXISTS "${DEBUG_ACCESS_SDK_DIR}")
+            # The Debug Access SDK is required to build the dump_syms tool.
+            # It ships with the pro versions of Visual Studio 2008 and 2010 but not
+            # the express versions. It is available separately as part of the Windows SDK
+            # however. Please check that VSINSTALLDIR environment variable is set.
+            message(FATAL_ERROR "Debug Access SDK not found in ${DEBUG_ACCESS_SDK_DIR}.")
+        endif()
+                    
+        include_directories(${DEBUG_ACCESS_SDK_DIR}/include)
+
+        set(DUMPSYMS_SRCS
+            # pdb_source_line_writer.cc is linked into the `dump_syms` target rather than
+            # `breakpad_common` to avoid a runtime dependency on the DIA SDK libs
+            # in the breakpad client library
+            ${BREAKPAD_SRC_DIR}/common/windows/pdb_source_line_writer.cc
+            ${BREAKPAD_SRC_DIR}/tools/windows/dump_syms/dump_syms.cc)
+        set(DUMPSYMS_HEADERS
+            ${BREAKPAD_SRC_DIR}/common/windows/pdb_source_line_writer.h)
+
+        find_library(DIA_SDK_GUID_LIB diaguids PATHS ${DEBUG_ACCESS_SDK_DIR}/lib)
+        if("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
+            find_library(DIA_SDK_GUID_LIB diaguids PATHS ${DEBUG_ACCESS_SDK_DIR}/lib/amd64)
+        else("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
+            find_library(DIA_SDK_GUID_LIB diaguids PATHS ${DEBUG_ACCESS_SDK_DIR}/lib)
+        endif("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
+
+        set(DUMPSYMS_LIBS ${DIA_SDK_GUID_LIB})
+    else()
+        set(DUMPSYMS_SRCS
+            ${BREAKPAD_SRC_DIR}/common/dwarf/bytereader.cc
+            ${BREAKPAD_SRC_DIR}/common/dwarf/dwarf2diehandler.cc
+            ${BREAKPAD_SRC_DIR}/common/dwarf/dwarf2reader.cc
+            ${BREAKPAD_SRC_DIR}/common/dwarf/elf_reader.cc
+            ${BREAKPAD_SRC_DIR}/common/dwarf_cfi_to_module.cc
+            ${BREAKPAD_SRC_DIR}/common/dwarf_cu_to_module.cc
+            ${BREAKPAD_SRC_DIR}/common/dwarf_line_to_module.cc
+            ${BREAKPAD_SRC_DIR}/common/dwarf_range_list_handler.cc
+            ${BREAKPAD_SRC_DIR}/common/language.cc
+            ${BREAKPAD_SRC_DIR}/common/module.cc
+            ${BREAKPAD_SRC_DIR}/common/stabs_reader.cc
+            ${BREAKPAD_SRC_DIR}/common/stabs_to_module.cc)
+        set(DUMPSYMS_HEADERS
+            ${BREAKPAD_SRC_DIR}/common/dwarf/bytereader.h
+            ${BREAKPAD_SRC_DIR}/common/dwarf/dwarf2diehandler.h
+            ${BREAKPAD_SRC_DIR}/common/dwarf/dwarf2reader.h
+            ${BREAKPAD_SRC_DIR}/common/dwarf/elf_reader.h
+            ${BREAKPAD_SRC_DIR}/common/dwarf_cfi_to_module.h
+            ${BREAKPAD_SRC_DIR}/common/dwarf_cu_to_module.h
+            ${BREAKPAD_SRC_DIR}/common/dwarf_line_to_module.h
+            ${BREAKPAD_SRC_DIR}/common/dwarf_range_list_handler.h
+            ${BREAKPAD_SRC_DIR}/common/language.h
+            ${BREAKPAD_SRC_DIR}/common/module.h
+            ${BREAKPAD_SRC_DIR}/common/stabs_reader.h
+            ${BREAKPAD_SRC_DIR}/common/stabs_to_module.h)
+
+        if(APPLE)          
+            list(APPEND DUMPSYMS_SRCS
+                ${BREAKPAD_SRC_DIR}/common/mac/arch_utilities.cc
+                ${BREAKPAD_SRC_DIR}/common/mac/dump_syms.cc
+                ${BREAKPAD_SRC_DIR}/common/mac/macho_reader.cc
+                ${BREAKPAD_SRC_DIR}/tools/mac/dump_syms/dump_syms_tool.cc)
+            list(APPEND DUMPSYMS_HEADERS
+                ${BREAKPAD_SRC_DIR}/common/mac/dump_syms.h
+                ${BREAKPAD_SRC_DIR}/common/mac/macho_reader.h)
+        elseif(UNIX)
+            list(APPEND DUMPSYMS_SRCS
+                ${BREAKPAD_SRC_DIR}/common/linux/dump_symbols.cc
+                ${BREAKPAD_SRC_DIR}/common/linux/elf_symbols_to_module.cc
+                ${BREAKPAD_SRC_DIR}/tools/linux/dump_syms/dump_syms.cc)
+            list(APPEND DUMPSYMS_HEADERS
+                ${BREAKPAD_SRC_DIR}/common/linux/dump_symbols.h
+                ${BREAKPAD_SRC_DIR}/common/linux/elf_symbols_to_module.h)
+        endif()
+    endif()
+
     add_executable(dump_syms
         ${DUMPSYMS_SRCS} ${DUMPSYMS_HEADERS})
     target_link_libraries(dump_syms breakpad_common ${DUMPSYMS_LIBS})
@@ -296,6 +291,14 @@ if(BKPAD_DUMP_SYMS)
 endif()
 
 if(BKPAD_MINIDUMP)
+    if(WIN32)
+        include_directories(${BREAKPAD_SRC_DIR}/third_party/windows/include)
+    elseif(APPLE)
+        include_directories(${BREAKPAD_SRC_DIR}/third_party/mac/include)
+    else(UNIX)
+        include_directories(${BREAKPAD_SRC_DIR}/third_party/linux/include)
+    endif()
+
     set(LIBDISASM_DIR ${BREAKPAD_SRC_DIR}/third_party/libdisasm)
     set(LIBDISASM_SRCS
         ${LIBDISASM_DIR}/ia32_implicit.c
