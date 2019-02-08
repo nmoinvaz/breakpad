@@ -35,8 +35,6 @@ if(WIN32)
         ${BREAKPAD_SRC_DIR}/common/windows/guid_string.h
         ${BREAKPAD_SRC_DIR}/common/windows/string_utils-inl.h)
     
-    set(BREAKPADCOMMON_LIBS Imagehlp)
-
     set(CLIENT_SRC_DIR ${BREAKPAD_SRC_DIR}/client/windows)
 
     list(APPEND BREAKPAD_LIB_SRCS
@@ -80,16 +78,6 @@ else()
             ${BREAKPAD_SRC_DIR}/common/mac/macho_walker.h
             ${BREAKPAD_SRC_DIR}/common/mac/string_utilities.h)
 
-        find_library(FOUNDATION_LIBRARY Foundation REQUIRED)
-        set(BREAKPADCOMMON_LIBS ${FOUNDATION_LIBRARY})
-        find_library(APPLICATIONSERVICES_LIBRARY ApplicationServices REQUIRED)
-        list(APPEND BREAKPADCOMMON_LIBS ${APPLICATIONSERVICES_LIBRARY})
-
-        if(APPLE AND CMAKE_GENERATOR MATCHES "Xcode")
-            # Xcode 10 or higher uses libc++
-            list(APPEND BREAKPADCOMMON_LIBS "c++")
-        endif()
-
         set(CLIENT_SRC_DIR ${BREAKPAD_SRC_DIR}/client/mac)
 
         list(APPEND BREAKPAD_LIB_SRCS
@@ -127,9 +115,6 @@ else()
             ${BREAKPAD_SRC_DIR}/common/linux/linux_libc_support.h
             ${BREAKPAD_SRC_DIR}/common/linux/memory_mapped_file.h
             ${BREAKPAD_SRC_DIR}/common/linux/safe_readlink.h)
-        
-        find_package(Threads)
-        set(BREAKPADCOMMON_LIBS ${CMAKE_THREAD_LIBS_INIT})
 
         set(CLIENT_SRC_DIR ${BREAKPAD_SRC_DIR}/client/linux)
 
@@ -174,6 +159,9 @@ macro(breakpad_set_project_properties project)
         target_compile_definitions(${project} PRIVATE
             _WIN32
             _CRT_SECURE_NO_WARNINGS)
+        target_compile_options(${project} PRIVATE
+            $<$<CONFIG:Debug>:/MTd> 
+            $<$<CONFIG:Release>:/MT>)
     endif()
 endmacro()
 
@@ -182,6 +170,23 @@ project(breakpad CXX)
 add_library(breakpad_common STATIC 
     ${BREAKPADCOMMON_LIB_SRCS} ${BREAKPADCOMMON_LIB_HEADERS})
 breakpad_set_project_properties(breakpad_common)
+
+if(WIN32)
+    set(BREAKPADCOMMON_LIBS Imagehlp)
+elseif(APPLE)
+    find_library(FOUNDATION_LIBRARY Foundation REQUIRED)
+    set(BREAKPADCOMMON_LIBS ${FOUNDATION_LIBRARY})
+    find_library(APPLICATIONSERVICES_LIBRARY ApplicationServices REQUIRED)
+    list(APPEND BREAKPADCOMMON_LIBS ${APPLICATIONSERVICES_LIBRARY})
+    if(CMAKE_GENERATOR MATCHES "Xcode")
+        # Xcode 10 or higher uses libc++
+        list(APPEND BREAKPADCOMMON_LIBS "c++")
+    endif()
+elseif(UNIX)
+    find_package(Threads)
+    set(BREAKPADCOMMON_LIBS ${CMAKE_THREAD_LIBS_INIT})
+endif()
+
 target_link_libraries(breakpad_common ${BREAKPADCOMMON_LIBS})
 
 add_library(breakpad 
@@ -214,7 +219,7 @@ if(BKPAD_DUMP_SYMS)
             # however. Please check that VSINSTALLDIR environment variable is set.
             message(FATAL_ERROR "Debug Access SDK not found in ${DEBUG_ACCESS_SDK_DIR}.")
         endif()
-                    
+
         include_directories(${DEBUG_ACCESS_SDK_DIR}/include)
 
         set(DUMPSYMS_SRCS
