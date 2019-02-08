@@ -173,7 +173,8 @@ class DwarfCUToModule: public dwarf2reader::RootDIEHandler {
     WarningReporter(const string &filename, uint64 cu_offset)
         : filename_(filename), cu_offset_(cu_offset), printed_cu_header_(false),
           printed_unpaired_header_(false),
-          uncovered_warnings_enabled_(false) { }
+          uncovered_warnings_enabled_(false),
+          unnamed_function_warnings_enabled_(false) { }
     virtual ~WarningReporter() { }
 
     // Set the name of the compilation unit we're processing to NAME.
@@ -189,7 +190,15 @@ class DwarfCUToModule: public dwarf2reader::RootDIEHandler {
     virtual void set_uncovered_warnings_enabled(bool value) {
       uncovered_warnings_enabled_ = value;
     }
-
+    
+    // Accessor and setting for unnamed_function_warnings_enabled.
+    virtual bool unnamed_function_warnings_enabled() const {
+      return unnamed_function_warnings_enabled_;
+    }
+    virtual void set_unnamed_function_warnings_enabled(bool value) {
+      unnamed_function_warnings_enabled_ = value;
+    }
+      
     // A DW_AT_specification in the DIE at OFFSET refers to a DIE we
     // haven't processed yet, or that wasn't marked as a declaration,
     // at TARGET.
@@ -243,6 +252,7 @@ class DwarfCUToModule: public dwarf2reader::RootDIEHandler {
     bool printed_cu_header_;
     bool printed_unpaired_header_;
     bool uncovered_warnings_enabled_;
+    bool unnamed_function_warnings_enabled_;
 
    private:
     // Print a per-CU heading, once.
