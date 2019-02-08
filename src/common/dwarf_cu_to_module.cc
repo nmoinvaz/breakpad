@@ -827,6 +827,8 @@ void DwarfCUToModule::WarningReporter::UncoveredLine(const Module::Line& line) {
 }
 
 void DwarfCUToModule::WarningReporter::UnnamedFunction(uint64_t offset) {
+  if (!unnamed_function_warnings_enabled_)
+    return;
   CUHeading();
   fprintf(stderr, "%s: warning: function at offset 0x%" PRIx64 " has no name\n",
           filename_.c_str(), offset);
