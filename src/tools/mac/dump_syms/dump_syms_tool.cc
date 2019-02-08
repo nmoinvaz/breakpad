@@ -60,6 +60,7 @@ struct Options {
   bool header_only;
   bool cfi;
   bool handle_inter_cu_refs;
+  bool report_warnings;
 };
 
 static bool StackFrameEntryComparator(const Module::StackFrameEntry* a,
@@ -122,6 +123,8 @@ static bool Start(const Options& options) {
     !options.dsymPath.empty() && !options.srcPath.empty() && options.cfi;
   const string& primary_file =
     split_module ? options.dsymPath : options.srcPath;
+
+  dump_symbols.SetReportWarnings(options.report_warnings);
 
   if (!dump_symbols.Read(primary_file))
     return false;
@@ -195,6 +198,7 @@ static void Usage(int argc, const char *argv[]) {
   fprintf(stderr, "Usage: %s [-a ARCHITECTURE] [-c] [-g dSYM path] "
                   "<Mach-o file>\n", argv[0]);
   fprintf(stderr, "\t-i: Output module header information only.\n");
+  fprintf(stderr, "\t-w: Output warning information.\n");
   fprintf(stderr, "\t-a: Architecture type [default: native, or whatever is\n");
   fprintf(stderr, "\t    in the file, if it contains only one architecture]\n");
   fprintf(stderr, "\t-g: Debug symbol file (dSYM) to dump in addition to the "
@@ -210,10 +214,13 @@ static void SetupOptions(int argc, const char *argv[], Options *options) {
   extern int optind;
   signed char ch;
 
-  while ((ch = getopt(argc, (char * const*)argv, "ia:g:chr?")) != -1) {
+  while ((ch = getopt(argc, (char * const *)argv, "iwa:g:chr?")) != -1) {
     switch (ch) {
       case 'i':
         options->header_only = true;
+        break;
+      case 'w':
+        options->report_warnings = true;
         break;
       case 'a': {
         const NXArchInfo *arch_info =

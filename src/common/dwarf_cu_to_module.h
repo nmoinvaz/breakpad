@@ -175,8 +175,7 @@ class DwarfCUToModule: public dwarf2reader::RootDIEHandler {
     WarningReporter(const string& filename, uint64_t cu_offset)
         : filename_(filename), cu_offset_(cu_offset), printed_cu_header_(false),
           printed_unpaired_header_(false),
-          uncovered_warnings_enabled_(false),
-          unnamed_function_warnings_enabled_(false) { }
+          uncovered_warnings_enabled_(false) { }
     virtual ~WarningReporter() { }
 
     // Set the name of the compilation unit we're processing to NAME.
@@ -192,15 +191,7 @@ class DwarfCUToModule: public dwarf2reader::RootDIEHandler {
     virtual void set_uncovered_warnings_enabled(bool value) {
       uncovered_warnings_enabled_ = value;
     }
-    
-    // Accessor and setting for unnamed_function_warnings_enabled.
-    virtual bool unnamed_function_warnings_enabled() const {
-      return unnamed_function_warnings_enabled_;
-    }
-    virtual void set_unnamed_function_warnings_enabled(bool value) {
-      unnamed_function_warnings_enabled_ = value;
-    }
-      
+
     // A DW_AT_specification in the DIE at OFFSET refers to a DIE we
     // haven't processed yet, or that wasn't marked as a declaration,
     // at TARGET.
@@ -262,7 +253,64 @@ class DwarfCUToModule: public dwarf2reader::RootDIEHandler {
     // Print an unpaired function/line heading, once.
     void UncoveredHeading();
   };
+  
+  class NullWarningReporter: public WarningReporter {
+   public:
+    NullWarningReporter(const string &filename, uint64 cu_offset):
+        WarningReporter(filename, cu_offset) { }
 
+    // Set the name of the compilation unit we're processing to NAME.
+    void SetCUName(const string &name) { }
+
+    // Accessor and setter for uncovered_warnings_enabled_.
+    // UncoveredFunction and UncoveredLine only report a problem if that is
+    // true. By default, these warnings are disabled, because those
+    // conditions occur occasionally in healthy code.
+    void set_uncovered_warnings_enabled(bool value) { }
+
+    // A DW_AT_specification in the DIE at OFFSET refers to a DIE we
+    // haven't processed yet, or that wasn't marked as a declaration,
+    // at TARGET.
+    void UnknownSpecification(uint64 offset, uint64 target) { }
+
+    // A DW_AT_abstract_origin in the DIE at OFFSET refers to a DIE we
+    // haven't processed yet, or that wasn't marked as inline, at TARGET.
+    void UnknownAbstractOrigin(uint64 offset, uint64 target) { }
+
+    // We were unable to find the DWARF section named SECTION_NAME.
+    void MissingSection(const string &section_name) { }
+
+    // The CU's DW_AT_stmt_list offset OFFSET is bogus.
+    void BadLineInfoOffset(uint64 offset) { }
+
+    // FUNCTION includes code covered by no line number data.
+    void UncoveredFunction(const Module::Function &function) { }
+
+    // Line number NUMBER in LINE_FILE, of length LENGTH, includes code
+    // covered by no function.
+    void UncoveredLine(const Module::Line &line) { }
+
+    // The DW_TAG_subprogram DIE at OFFSET has no name specified directly
+    // in the DIE, nor via a DW_AT_specification or DW_AT_abstract_origin
+    // link.
+    void UnnamedFunction(uint64 offset) { }
+
+    // __cxa_demangle() failed to demangle INPUT.
+    void DemangleError(const string &input) { }
+
+    // The DW_FORM_ref_addr at OFFSET to TARGET was not handled because
+    // FilePrivate did not retain the inter-CU specification data.
+    void UnhandledInterCUReference(uint64 offset, uint64 target) { }
+
+    // The DW_AT_ranges at offset is malformed (truncated or outside of the
+    // .debug_ranges section's bound).
+    void MalformedRangeList(uint64 offset) { }
+
+    // A DW_AT_ranges attribute was encountered but the no .debug_ranges
+    // section was found.
+    void MissingRanges() { }
+  };
+  
   // Create a DWARF debugging info handler for a compilation unit
   // within FILE_CONTEXT. This uses information received from the
   // dwarf2reader::CompilationUnit DWARF parser to populate
