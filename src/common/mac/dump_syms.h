@@ -62,7 +62,8 @@ class DumpSymbols {
         contents_(),
         object_files_(),
         selected_object_file_(),
-        selected_object_name_() { }
+        selected_object_name_(),
+        report_warnings_(true) { }
   ~DumpSymbols() {
   }
 
@@ -93,6 +94,9 @@ class DumpSymbols {
   // architecture matches that of this dumper program.
   bool SetArchitecture(const std::string &arch_name);
 
+  // Set whether or not to report DWARF warnings
+  void SetReportWarnings(bool report_warnings);
+  
   // Return a pointer to an array of SuperFatArch structures describing the
   // object files contained in this dumper's file. Set *|count| to the number
   // of elements in the array. The returned array is owned by this DumpSymbols
@@ -163,7 +167,7 @@ class DumpSymbols {
 
   // Whether to handle references between compilation units.
   const bool handle_inter_cu_refs_;
-
+  
   // The name of the file or bundle whose symbols this will dump.
   // This is the path given to Read, for use in error messages.
   std::string input_pathname_;
@@ -192,6 +196,9 @@ class DumpSymbols {
   // fat binary, it includes an indication of the particular architecture
   // within that binary.
   string selected_object_name_;
+
+  // Whether or not to report warnings
+  bool report_warnings_;
 };
 
 }  // namespace google_breakpad
