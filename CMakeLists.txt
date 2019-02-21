@@ -144,6 +144,8 @@ else()
 endif()
 
 macro(breakpad_set_project_properties project)
+    set_target_properties(${project} PROPERTIES 
+        C_STANDARD 99)
     if(APPLE AND CMAKE_GENERATOR MATCHES "Xcode")
         set_target_properties(${project} PROPERTIES 
             XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++11"
