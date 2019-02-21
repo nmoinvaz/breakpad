@@ -227,6 +227,7 @@ ExceptionHandler::ExceptionHandler(const MinidumpDescriptor& descriptor,
       callback_context_(callback_context),
       minidump_descriptor_(descriptor),
       crash_handler_(NULL) {
+  fdes[0] = fdes[1] = -1;
   if (server_fd >= 0)
     crash_generation_client_.reset(CrashGenerationClient::TryCreate(server_fd));
 
