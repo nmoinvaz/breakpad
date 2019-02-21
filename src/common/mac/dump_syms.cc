@@ -494,6 +494,7 @@ bool DumpSymbols::ReadDwarf(google_breakpad::Module *module,
                                                &die_dispatcher);
     // Process the entire compilation unit; get the offset of the next.
     offset += dwarf_reader.Start();
+    delete reporter;
   }
 
   return true;
