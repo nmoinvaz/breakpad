@@ -170,7 +170,7 @@ src_client_linux_libbreakpad_client_a_SOURCES = \
 	src/client/minidump_file_writer-inl.h \
 	src/client/minidump_file_writer.cc \
 	src/client/minidump_file_writer.h \
-	src/common/convert_UTF.c \
+	src/common/convert_UTF.cc \
 	src/common/convert_UTF.h \
 	src/common/md5.cc \
 	src/common/md5.h \
@@ -389,7 +389,8 @@ check_PROGRAMS += \
 	src/processor/pathname_stripper_unittest \
 	src/processor/postfix_evaluator_unittest \
 	src/processor/proc_maps_linux_unittest \
-	src/processor/range_map_shrink_down_unittest \
+	src/processor/range_map_truncate_lower_unittest \
+	src/processor/range_map_truncate_upper_unittest \
 	src/processor/range_map_unittest \
 	src/processor/stackwalker_amd64_unittest \
 	src/processor/stackwalker_arm_unittest \
@@ -657,6 +658,7 @@ src_tools_mac_dump_syms_dump_syms_mac_LDADD= \
 
 src_common_dumper_unittest_SOURCES = \
 	src/common/byte_cursor_unittest.cc \
+	src/common/convert_UTF.cc \
 	src/common/dwarf_cfi_to_module.cc \
 	src/common/dwarf_cfi_to_module_unittest.cc \
 	src/common/dwarf_cu_to_module.cc \
@@ -673,6 +675,8 @@ src_common_dumper_unittest_SOURCES = \
 	src/common/stabs_reader_unittest.cc \
 	src/common/stabs_to_module.cc \
 	src/common/stabs_to_module_unittest.cc \
+	src/common/string_conversion.cc \
+	src/common/string_conversion_unittest.cc \
 	src/common/test_assembler.cc \
 	src/common/dwarf/bytereader.cc \
 	src/common/dwarf/bytereader.h \
@@ -1049,14 +1053,24 @@ src_processor_postfix_evaluator_unittest_LDADD = \
 	src/processor/pathname_stripper.o \
 	$(PTHREAD_CFLAGS) $(PTHREAD_LIBS)
 
-src_processor_range_map_shrink_down_unittest_SOURCES = \
-	src/processor/range_map_shrink_down_unittest.cc
-src_processor_range_map_shrink_down_unittest_LDADD = \
-  src/processor/logging.o \
+src_processor_range_map_truncate_lower_unittest_SOURCES = \
+	src/processor/range_map_truncate_lower_unittest.cc
+src_processor_range_map_truncate_lower_unittest_LDADD = \
+	src/processor/logging.o \
 	src/processor/pathname_stripper.o \
 	$(TEST_LIBS) \
 	$(PTHREAD_CFLAGS) $(PTHREAD_LIBS)
-src_processor_range_map_shrink_down_unittest_CPPFLAGS = \
+src_processor_range_map_truncate_lower_unittest_CPPFLAGS = \
+	$(AM_CPPFLAGS) $(TEST_CFLAGS)
+
+src_processor_range_map_truncate_upper_unittest_SOURCES = \
+	src/processor/range_map_truncate_upper_unittest.cc
+src_processor_range_map_truncate_upper_unittest_LDADD = \
+	src/processor/logging.o \
+	src/processor/pathname_stripper.o \
+	$(TEST_LIBS) \
+	$(PTHREAD_CFLAGS) $(PTHREAD_LIBS)
+src_processor_range_map_truncate_upper_unittest_CPPFLAGS = \
 	$(AM_CPPFLAGS) $(TEST_CFLAGS)
 
 src_processor_range_map_unittest_SOURCES = \
