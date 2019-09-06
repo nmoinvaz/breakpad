@@ -13,7 +13,7 @@ include_directories(${BREAKPAD_SRC_DIR}
     ${BREAKPAD_SRC_DIR}/common)
 
 set(BREAKPADCOMMON_LIB_SRCS
-    ${BREAKPAD_SRC_DIR}/common/convert_UTF.c
+    ${BREAKPAD_SRC_DIR}/common/convert_UTF.cc
     ${BREAKPAD_SRC_DIR}/common/md5.cc
     ${BREAKPAD_SRC_DIR}/common/string_conversion.cc)
 set(BREAKPADCOMMON_LIB_HEADERS
@@ -28,11 +28,17 @@ if(WIN32)
                     -D_UNICODE)
 
     list(APPEND BREAKPADCOMMON_LIB_SRCS
-        ${BREAKPAD_SRC_DIR}/common/windows/path_helper.cc
         ${BREAKPAD_SRC_DIR}/common/windows/guid_string.cc
+        ${BREAKPAD_SRC_DIR}/common/windows/path_helper.cc
+        ${BREAKPAD_SRC_DIR}/common/windows/pdb_source_line_writer.cc
+        ${BREAKPAD_SRC_DIR}/common/windows/pe_source_line_writer.cc
+        ${BREAKPAD_SRC_DIR}/common/windows/pe_util.cc
         ${BREAKPAD_SRC_DIR}/common/windows/string_utils.cc)
     list(APPEND BREAKPADCOMMON_LIB_HEADERS
         ${BREAKPAD_SRC_DIR}/common/windows/guid_string.h
+        ${BREAKPAD_SRC_DIR}/common/windows/pdb_source_line_writer.h
+        ${BREAKPAD_SRC_DIR}/common/windows/pe_source_line_writer.h
+        ${BREAKPAD_SRC_DIR}/common/windows/pe_util.h
         ${BREAKPAD_SRC_DIR}/common/windows/string_utils-inl.h)
 
     set(CLIENT_SRC_DIR ${BREAKPAD_SRC_DIR}/client/windows)
@@ -237,11 +243,11 @@ if(BKPAD_DUMP_SYMS)
 
         find_library(DIA_SDK_GUID_LIB diaguids PATHS ${DEBUG_ACCESS_SDK_DIR}/lib)
         if("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
-            find_library(DIA_SDK_GUID_LIB diaguids PATHS ${DEBUG_ACCESS_SDK_DIR}/lib/amd64)
-        else("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
-            find_library(DIA_SDK_GUID_LIB diaguids PATHS ${DEBUG_ACCESS_SDK_DIR}/lib)
-        endif("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
-
+            find_library(DIA_SDK_GUID_LIB64 diaguids PATHS ${DEBUG_ACCESS_SDK_DIR}/lib/amd64)
+            if(DIA_SDK_GUID_LIB64)
+                set(DIA_SDK_GUID_LIB ${DIA_SDK_GUID_LIB64})
+            endif()
+        endif()
         set(DUMPSYMS_LIBS ${DIA_SDK_GUID_LIB})
     else()
         set(DUMPSYMS_SRCS
