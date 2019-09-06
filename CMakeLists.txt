@@ -9,7 +9,7 @@ option(BKPAD_MINIDUMP "Builds tool for producing stacktrace" ON)
 
 set(BREAKPAD_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-include_directories(${BREAKPAD_SRC_DIR} 
+include_directories(${BREAKPAD_SRC_DIR}
     ${BREAKPAD_SRC_DIR}/common)
 
 set(BREAKPADCOMMON_LIB_SRCS
@@ -34,7 +34,7 @@ if(WIN32)
     list(APPEND BREAKPADCOMMON_LIB_HEADERS
         ${BREAKPAD_SRC_DIR}/common/windows/guid_string.h
         ${BREAKPAD_SRC_DIR}/common/windows/string_utils-inl.h)
-    
+
     set(CLIENT_SRC_DIR ${BREAKPAD_SRC_DIR}/client/windows)
 
     list(APPEND BREAKPAD_LIB_SRCS
@@ -144,14 +144,14 @@ else()
 endif()
 
 macro(breakpad_set_project_properties project)
-    set_target_properties(${project} PROPERTIES 
+    set_target_properties(${project} PROPERTIES
         C_STANDARD 99)
     if(APPLE AND CMAKE_GENERATOR MATCHES "Xcode")
-        set_target_properties(${project} PROPERTIES 
+        set_target_properties(${project} PROPERTIES
             XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++11"
             XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++")
     else()
-        set_target_properties(${project} PROPERTIES 
+        set_target_properties(${project} PROPERTIES
             CXX_STANDARD 11
             CXX_STANDARD_REQUIRED ON
             CXX_EXTENSIONS OFF
@@ -162,14 +162,14 @@ macro(breakpad_set_project_properties project)
             _WIN32
             _CRT_SECURE_NO_WARNINGS)
         target_compile_options(${project} PRIVATE
-            $<$<CONFIG:Debug>:/MTd> 
+            $<$<CONFIG:Debug>:/MTd>
             $<$<CONFIG:Release>:/MT>)
     endif()
 endmacro()
 
 project(breakpad CXX)
 
-add_library(breakpad_common STATIC 
+add_library(breakpad_common STATIC
     ${BREAKPADCOMMON_LIB_SRCS} ${BREAKPADCOMMON_LIB_HEADERS})
 breakpad_set_project_properties(breakpad_common)
 
@@ -191,7 +191,7 @@ endif()
 
 target_link_libraries(breakpad_common ${BREAKPADCOMMON_LIBS})
 
-add_library(breakpad 
+add_library(breakpad
     ${BREAKPAD_LIB_SRCS} ${BREAKPAD_LIB_HEADERS})
 breakpad_set_project_properties(breakpad)
 if(APPLE)
@@ -205,6 +205,9 @@ target_link_libraries(breakpad breakpad_common)
 if(BKPAD_DUMP_SYMS)
     if(WIN32)
         set(DEBUG_ACCESS_SDK_DIR "$ENV{VSINSTALLDIR}/DIA SDK")
+        if (NOT EXISTS "${DEBUG_ACCESS_SDK_DIR}")
+            set(DEBUG_ACCESS_SDK_DIR "$ENV{VS160COMNTOOLS}/../../DIA SDK")
+        endif()
         if (NOT EXISTS "${DEBUG_ACCESS_SDK_DIR}")
             set(DEBUG_ACCESS_SDK_DIR "$ENV{VS150COMNTOOLS}/../../DIA SDK")
         endif()
@@ -389,7 +392,7 @@ if(BKPAD_MINIDUMP)
             ${BREAKPAD_SRC_DIR}/third_party/getopt/getopt.h)
     endif()
 
-    add_executable(minidump_stackwalk 
+    add_executable(minidump_stackwalk
         ${MINIDUMP_STACKWALK_SRCS} ${MINIDUMP_STACKWALK_HEADERS})
     breakpad_set_project_properties(minidump_stackwalk)
     target_link_libraries(minidump_stackwalk breakpad_common)
