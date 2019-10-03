@@ -405,4 +405,18 @@ wstring GenerateDebugIdentifier(DWORD age, DWORD signature)
   return wstring(identifier_string);
 }
 
+const wchar_t* FileHeaderMachineToCpuString(WORD machine)
+{
+  switch (machine) {
+    case IMAGE_FILE_MACHINE_I386: {
+      return L"x86";
+    }
+    case IMAGE_FILE_MACHINE_IA64:
+    case IMAGE_FILE_MACHINE_AMD64: {
+      return L"x86_64";
+    }
+    default: { return L"unknown"; }
+  }
+}
+
 }  // namespace google_breakpad
