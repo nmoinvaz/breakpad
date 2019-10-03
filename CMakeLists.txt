@@ -30,13 +30,11 @@ if(WIN32)
     list(APPEND BREAKPADCOMMON_LIB_SRCS
         ${BREAKPAD_SRC_DIR}/common/windows/guid_string.cc
         ${BREAKPAD_SRC_DIR}/common/windows/path_helper.cc
-        ${BREAKPAD_SRC_DIR}/common/windows/pdb_source_line_writer.cc
         ${BREAKPAD_SRC_DIR}/common/windows/pe_source_line_writer.cc
         ${BREAKPAD_SRC_DIR}/common/windows/pe_util.cc
         ${BREAKPAD_SRC_DIR}/common/windows/string_utils.cc)
     list(APPEND BREAKPADCOMMON_LIB_HEADERS
         ${BREAKPAD_SRC_DIR}/common/windows/guid_string.h
-        ${BREAKPAD_SRC_DIR}/common/windows/pdb_source_line_writer.h
         ${BREAKPAD_SRC_DIR}/common/windows/pe_source_line_writer.h
         ${BREAKPAD_SRC_DIR}/common/windows/pe_util.h
         ${BREAKPAD_SRC_DIR}/common/windows/string_utils-inl.h)
