@@ -49,10 +49,14 @@ namespace {
  */
 typedef unsigned char UBYTE;
 
-#if !defined(_WIN64)
-#define UNW_FLAG_EHANDLER  0x01
-#define UNW_FLAG_UHANDLER  0x02
-#define UNW_FLAG_CHAININFO 0x04
+#ifndef UNW_FLAG_EHANDLER
+#  define UNW_FLAG_EHANDLER  0x01
+#endif
+#ifndef UNW_FLAG_UHANDLER
+#  define UNW_FLAG_UHANDLER  0x02
+#endif
+#ifndef UNW_FLAG_CHAININFO
+#  define UNW_FLAG_CHAININFO 0x04
 #endif
 
 union UnwindCode {
