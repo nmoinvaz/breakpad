@@ -165,9 +165,13 @@ macro(breakpad_set_project_properties project)
         target_compile_definitions(${project} PRIVATE
             _WIN32
             _CRT_SECURE_NO_WARNINGS)
-        target_compile_options(${project} PRIVATE
-            $<$<CONFIG:Debug>:/MTd>
-            $<$<CONFIG:Release>:/MT>)
+        if(CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
+            target_compile_options(${project} PRIVATE
+                /MD$<$<CONFIG:Debug>:d>)
+        else()
+            target_compile_options(${project} PRIVATE
+                /MT$<$<CONFIG:Debug>:d>)
+        endif()
     endif()
 endmacro()
 
